@@ -1,17 +1,42 @@
-'use strict';
+'use strict'
 
 const express = require('express');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
 
-// Constants
-const PORT = process.env.PORT || 8080;
-const HOST = '0.0.0.0';
-
-// App
 const app = express();
+const PORT = process.env.PORT || 8080;
+
+// Middleware to parse JSON bodies
+app.use(bodyParser.json());
+
+//Direct to the posting.html
 app.get('/', (req, res) => {
-  res.send('Welcome to CMPT 353 Tutorials');
+    res.sendFile(path.join(__dirname, 'pages', 'posting.html'));
 });
 
-app.listen(PORT, HOST, () => {
-  console.log(`Running on http://localhost:${PORT}`);
+app.post('/postmessage', (req, res) => {
+    const { topic, data } = req.body;
+
+    if (!topic || !data) {
+        return res.status(400).send('topic and data are required.');
+    }
+
+    const timestamp = new Date().toISOString();
+    const postMessage = `Topic: ${topic}, Data: ${data}, Timestamp: ${timestamp}\n`;
+
+    // Append the message to posts.txt or create it if it doesn't exist
+    fs.appendFile('posts.txt', postMessage, (err) => {
+        if (err) {
+            console.error('Failed to write to file', err);
+            return res.status(500).send('Server error.');
+        }
+
+        res.send('Message saved successfully.');
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Hosting on http://localhost:${PORT}`);
 });

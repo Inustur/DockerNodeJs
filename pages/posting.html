@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Messages</title>
+</head>
+<body>
+
+<h2>Create a New Post</h2>
+<form id="postForm">
+    <label for="topic">Topic:</label>
+    <input type="text" id="topic" name="topic" required><br><br>
+    
+    <label for="data">Data:</label>
+    <textarea id="data" name="data" rows="4" cols="50" required></textarea><br><br>
+    
+    <input type="submit" value="Post">
+</form>
+
+<div id="messages"></div>
+
+<script>
+    // Fetch existing messages
+    function fetchMessages() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/getmessages', true);
+        xhr.onload = function() {
+            if (this.status === 200) {
+                const messages = JSON.parse(this.responseText);
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML = messages.join('<br><br>'); // Convert array to string and display
+            }
+        };
+        xhr.send();
+    }
+
+    // Handle form submission
+    const form = document.getElementById('postForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const topic = document.getElementById('topic').value;
+        const data = document.getElementById('data').value;
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/postmessage', true);
+        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        xhr.onload = function() {
+            if (this.status === 200) {
+                alert('Message posted successfully!');
+                document.getElementById('topic').value = '';
+                document.getElementById('data').value = '';
+                fetchMessages(); // Fetch messages again to show the new post
+            } else {
+                alert('Error posting message.');
+            }
+        };
+        xhr.send(JSON.stringify({ topic: topic, data: data }));
+    });
+
+    // Initial fetch
+    fetchMessages();
+
+    // Poll every 5 seconds to keep posts updated
+    setInterval(fetchMessages, 5000);
+</script>
+
+</body>
+</html>
